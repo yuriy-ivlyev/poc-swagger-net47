@@ -12,17 +12,25 @@ namespace PocSwagger.Controllers
     {
         /// <summary>
         /// Method1 – available only for consumer1.
+        /// Accepts a complex Consumer1Request that includes shared types
+        /// (ContactInfo, Address, Priority).
         /// </summary>
         [HttpPost]
         [Route("method1")]
         [ApiConsumer("consumer1")]
         public Consumer1Response Method1([FromBody] Consumer1Request request)
         {
-            return new Consumer1Response { Id = 1, Result = $"Hello {request?.Name}" };
+            return new Consumer1Response
+            {
+                Id = 1,
+                Result = $"Hello {request?.Name}",
+                EchoedContact = request?.Contact
+            };
         }
 
         /// <summary>
         /// Method2 – available for both consumer1 and consumer2.
+        /// Accepts a SharedRequest that includes shared types (DateRange, Priority).
         /// </summary>
         [HttpPost]
         [Route("method2")]
@@ -32,12 +40,15 @@ namespace PocSwagger.Controllers
             return new SharedResponse
             {
                 TotalCount = 1,
-                Items = new[] { request?.Query ?? "default" }
+                Items = new[] { request?.Query ?? "default" },
+                AppliedDateRange = request?.DateRange
             };
         }
 
         /// <summary>
         /// Method3 – available only for consumer2.
+        /// Accepts a complex Consumer2Request that includes shared types
+        /// (Address, DateRange, Priority).
         /// </summary>
         [HttpPost]
         [Route("method3")]
@@ -47,7 +58,8 @@ namespace PocSwagger.Controllers
             return new Consumer2Response
             {
                 TransactionId = "TXN-001",
-                Success = request?.Amount > 0
+                Success = request?.Amount > 0,
+                EchoedBillingAddress = request?.BillingAddress
             };
         }
     }
