@@ -13,14 +13,12 @@ Generate separate OpenAPI (Swagger) JSON documents per consumer (`consumer1`, `c
 ```
 PocSwagger/
 ├── App_Start/
-│   ├── SwaggerConfig.cs          # Swashbuckle MultipleApiVersions + PruneUnusedSchemasFilter
+│   ├── SwaggerConfig.cs          # Swashbuckle MultipleApiVersions + Swagger UI
 │   └── WebApiConfig.cs           # Attribute routing
 ├── Attributes/
 │   └── ApiConsumerAttribute.cs   # [ApiConsumer("consumer1", "consumer2")]
 ├── Controllers/
 │   └── TestApiController.cs      # Method1 (c1), Method2 (c1+c2), Method3 (c2)
-├── Filters/
-│   └── PruneUnusedSchemasFilter.cs  # Removes unreferenced definitions
 ├── Models/
 │   └── Dtos.cs                   # Consumer1Request/Response, Consumer2Request/Response, SharedRequest/Response
 ├── Global.asax / Global.asax.cs
@@ -63,7 +61,7 @@ PocSwagger/
 
 | URL | Description |
 |-----|-------------|
-| `http://localhost:<port>/swagger` | Swagger UI with consumer selector |
+| [http://localhost:<port>/swagger](http://localhost:<port>/swagger) | Swagger UI with consumer selector |
 
 Use the **"Explore"** dropdown (enabled via `EnableDiscoveryUrlSelector`) to switch between the two consumer documents.
 
@@ -73,8 +71,8 @@ Use the **"Explore"** dropdown (enabled via `EnableDiscoveryUrlSelector`) to swi
 
 | Consumer | URL |
 |----------|-----|
-| consumer1 | `http://localhost:<port>/swagger/docs/consumer1` |
-| consumer2 | `http://localhost:<port>/swagger/docs/consumer2` |
+| consumer1 | [http://localhost:<port>/swagger/docs/consumer1](http://localhost:<port>/swagger/docs/consumer1) |
+| consumer2 | [http://localhost:<port>/swagger/docs/consumer2](http://localhost:<port>/swagger/docs/consumer2) |
 
 ---
 
@@ -104,6 +102,3 @@ Apply to an action method **or** a controller class.
 Registers two Swagger documents (`consumer1`, `consumer2`) via `MultipleApiVersions`.  
 The resolver checks the `ApiConsumerAttribute` at action level first, then controller level.
 
-### `PruneUnusedSchemasFilter`
-
-An `IDocumentFilter` that removes any `definitions` entry not reachable (directly or transitively via `$ref`) from the operations in the current document. This keeps the exported JSON clean for import into WSO2 API Manager.

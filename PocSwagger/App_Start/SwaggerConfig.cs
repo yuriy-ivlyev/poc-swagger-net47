@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Web.Http;
 using System.Web.Http.Description;
 using PocSwagger.Attributes;
-using PocSwagger.Filters;
 using Swashbuckle.Application;
 
 namespace PocSwagger.App_Start
@@ -15,49 +15,36 @@ namespace PocSwagger.App_Start
             config.EnableSwagger(c =>
             {
                 c.MultipleApiVersions(
-                    (apiDescription, targetApiVersion) => IsIncluded(apiDescription, targetApiVersion),
-                    vc =>
+                    (apiDesc, targetConsumer) => IsIncluded(apiDesc, targetConsumer),
+                    versionBuilder =>
                     {
-                        vc.Version("consumer2", "API – Consumer 2");
-                        vc.Version("consumer1", "API – Consumer 1");
+                        versionBuilder.Version("consumer1", "API – Consumer1");
+                        versionBuilder.Version("consumer2", "API – Consumer2");
                     });
 
-                c.DocumentFilter<PruneUnusedSchemasFilter>();
-
-                // Resolve attribute-based XML comments if an XML doc file is present
-                // c.IncludeXmlComments(GetXmlCommentsPath());
+                c.DocumentFilter<PocSwagger.SwaggerExtensions.PruneUnusedSchemasFilter>();
             })
-            .EnableSwaggerUi(ui =>
+            .EnableSwaggerUi(c =>
             {
-                ui.EnableDiscoveryUrlSelector();
+                c.EnableDiscoveryUrlSelector();
+                c.InjectJavaScript(typeof(SwaggerConfig).Assembly, "PocSwagger.SwaggerExtensions.swagger-links.js");
             });
         }
 
-        /// <summary>
-        /// Returns <c>true</c> when <paramref name="apiDescription"/> should appear
-        /// in the Swagger document for <paramref name="targetConsumer"/>.
-        /// Resolution order: action attribute → controller attribute → exclude.
-        /// </summary>
         private static bool IsIncluded(ApiDescription apiDescription, string targetConsumer)
         {
-            // 1. Check action-level attribute
-            var actionAttr = apiDescription.ActionDescriptor
-                .GetCustomAttributes<ApiConsumerAttribute>()
-                .FirstOrDefault();
+            var actionDescriptor = apiDescription.ActionDescriptor;
+            var method = actionDescriptor?.GetCustomAttributes<ApiConsumerAttribute>().FirstOrDefault();
+            if (method != null)
+                return method.Consumers.Contains(targetConsumer, StringComparer.OrdinalIgnoreCase);
 
-            if (actionAttr != null)
-                return actionAttr.Consumers.Contains(targetConsumer, StringComparer.OrdinalIgnoreCase);
-
-            // 2. Fall back to controller-level attribute
-            var controllerAttr = apiDescription.ActionDescriptor.ControllerDescriptor
-                .GetCustomAttributes<ApiConsumerAttribute>()
-                .FirstOrDefault();
-
+            var controllerType = actionDescriptor?.ControllerDescriptor?.ControllerType;
+            var controllerAttr = controllerType?.GetCustomAttribute<ApiConsumerAttribute>();
             if (controllerAttr != null)
                 return controllerAttr.Consumers.Contains(targetConsumer, StringComparer.OrdinalIgnoreCase);
 
-            // 3. No attribute → exclude from all consumer documents
             return false;
         }
     }
 }
+
